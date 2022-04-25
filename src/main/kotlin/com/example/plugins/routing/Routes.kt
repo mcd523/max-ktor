@@ -5,7 +5,7 @@ import com.example.plugins.graphql.GraphQLConfiguration
 import com.example.plugins.graphql.GraphQlRequest
 import com.example.plugins.routing.locations.MyLocation
 import com.example.plugins.routing.locations.Type
-import com.example.services.DependentService
+import com.example.services.ArticleService
 import com.google.gson.Gson
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -26,7 +26,7 @@ class Routes: DIAware {
 
     override val di: DI by lazy { MaxKtorApplication.di }
 
-    private val service: DependentService by di.instance()
+    private val service: ArticleService by di.instance()
     private val graphQl: GraphQLConfiguration by di.instance()
     private val gson: Gson by di.instance()
 
@@ -56,8 +56,9 @@ class Routes: DIAware {
                 val result = try {
                     graphQl.schema.execute(request.query, variables)
                 } catch (e: Exception) {
+                    log.error("Error processing graphql request.", e)
                     call.respondText(gson.toJson(mapOf("error" to e.message)), ContentType.Application.Json, HttpStatusCode.InternalServerError)
-                    ""
+                    return@post
                 }
 
                 call.respondText(result, ContentType.Application.Json, HttpStatusCode.OK)
